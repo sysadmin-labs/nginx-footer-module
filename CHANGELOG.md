@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.1.1 (2026-10-31)
+
+- The test suite now covers the subrequest and `304` cases the readme
+  already described, alongside the `204` that was there from the start.  No
+  change to the module itself.
+
 ## v0.1.0 (2026-10-31)
 
 - First release.  `footer` appends text, which may be built from variables,

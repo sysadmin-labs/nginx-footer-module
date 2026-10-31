@@ -1,0 +1,48 @@
+name: Footer
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    # Monday morning, so a new nginx release that breaks the module shows
+    # up here and not in somebody's build
+    - cron: '59 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  footer:
+    name: what the body and the header say
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # t/ checks the body.  Here the header is checked against it: a HEAD has
+    # to announce the length a GET delivers, and an entity tag has to be weak
+    # once the body is no longer the file on disk.
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+        with:
+          test-nginx: 'false'
+
+      - name: Build nginx
+        run: |
+          . .github/versions.env
+          ci/build.sh "$NGINX_VERSION" "$HOME/nginx"
+
+      - name: Drive the module
+        run: ci/footer.sh "$HOME/nginx/sbin/nginx"
+
+      - name: Build the module as a loadable object
+        run: |
+          . .github/versions.env
+          ci/build.sh "$NGINX_VERSION" "$HOME/nginx-dyn" dynamic
+
+      - name: Drive the loaded module
+        run: |
+          FOOTER_LOAD_MODULE=$HOME/nginx-dyn/modules/ngx_http_footer_filter_module.so \
+            ci/footer.sh "$HOME/nginx-dyn/sbin/nginx"

@@ -145,3 +145,41 @@ GET /t
 body[F]
 --- response_headers
 Content-Length: 7
+
+
+
+=== TEST 11: a 304 carries no body and no footer
+--- config
+    location = /a.html {
+        default_type text/html;
+        footer "[F]";
+    }
+--- user_files
+>>> a.html
+body
+--- request
+GET /a.html
+--- more_headers
+If-None-Match: *
+--- error_code: 304
+--- response_body chomp
+
+
+
+=== TEST 12: a subrequest gets no footer
+--- config
+    location /outer {
+        default_type text/html;
+        ssi on;
+        footer "[OUT]";
+        return 200 '<!--# include virtual="/inner" -->';
+    }
+    location /inner {
+        default_type text/html;
+        footer "[IN]";
+        return 200 "X";
+    }
+--- request
+GET /outer
+--- response_body chop
+X[OUT]
